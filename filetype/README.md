@@ -42,18 +42,18 @@ filename: The file to process. (Required)
 Extract columns from a file:
 
 ```bash
-python ufh.py --filename 'data.csv' --extract 'Column1' 'Column2' --newfile 'extracted.csv'
+python ufh.py 'data.csv' --extract 'Column1' 'Column2' --newfile 'extracted.csv'
 ```
 
 Search entire file:
 ```bash
-python ufh.py --filename 'data.csv' --search 'pattern'
+python ufh.py 'data.csv' --search 'pattern'
 ```
 
 Search specific column:
 
 ```bash
-python ufh.py --filename 'data.csv' --searchcol 'Column1' --pattern 'pattern' --output 'csv'
+python ufh.py 'data.csv' --searchcol 'Column1' --pattern 'pattern' --output 'csv'
 ```
 
 ## Disclaimer
