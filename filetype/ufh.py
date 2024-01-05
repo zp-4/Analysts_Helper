@@ -4,12 +4,13 @@ import openpyxl
 import xlrd
 from openpyxl import Workbook
 import argparse
+import os
 
-
-# Constants for file types
+# Constants for file types and default output filename
 CSV = 'csv'
 XLSX = 'xlsx'
 XLS = 'xls'
+DEFAULT_CSV_NAME = 'output.csv'  # Default output file name if none is provided
 
 class UniversalHandler:
     def __init__(self, filename):
@@ -17,11 +18,11 @@ class UniversalHandler:
         self.handler = self.get_handler()
 
     def get_handler(self):
-        if self.filename.endswith('.csv'):
+        if self.filename.lower().endswith('.csv'):
             return CSVHandler(self.filename)
-        elif self.filename.endswith('.xlsx'):
+        elif self.filename.lower().endswith('.xlsx'):
             return ExcelHandler(self.filename, XLSX)
-        elif self.filename.endswith('.xls'):
+        elif self.filename.lower().endswith('.xls'):
             return ExcelHandler(self.filename, XLS)
         else:
             raise ValueError("Unsupported file type")
@@ -32,7 +33,7 @@ class CSVHandler:
 
     def extract_columns(self, columns, new_filename):
         try:
-            with open(self.filename, mode='r') as file, open(new_filename, mode='w', newline='') as new_file:
+            with open(self.filename, mode='r', newline='', encoding='utf-8') as file, open(new_filename, mode='w', newline='', encoding='utf-8') as new_file:
                 reader = csv.DictReader(file)
                 writer = csv.DictWriter(new_file, fieldnames=columns)
                 writer.writeheader()
@@ -45,7 +46,7 @@ class CSVHandler:
     def search_csv(self, pattern):
         matches = []
         try:
-            with open(self.filename, mode='r') as file:
+            with open(self.filename, mode='r', newline='', encoding='utf-8') as file:
                 reader = csv.reader(file)
                 for row in reader:
                     if any(re.search(pattern, cell) for cell in row):
@@ -54,10 +55,10 @@ class CSVHandler:
         except Exception as e:
             return f"Error occurred: {e}"
 
-    def search_column(self, column, pattern, output_choice='print'):
+    def search_column(self, column, pattern, output_choice='print', new_filename=DEFAULT_CSV_NAME):
         unique_results = set()
         try:
-            with open(self.filename, mode='r') as file:
+            with open(self.filename, mode='r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
                     if re.search(pattern, row[column]):
@@ -67,11 +68,12 @@ class CSVHandler:
                 for result in unique_results:
                     print(result)
             elif output_choice == 'csv':
-                with open(f'{column}_search_results.csv', mode='w', newline='') as new_file:
+                output_path = os.path.join(os.getcwd(), new_filename)  # Using provided name or default for file paths
+                with open(output_path, mode='w', newline='', encoding='utf-8') as new_file:
                     writer = csv.writer(new_file)
                     for result in unique_results:
                         writer.writerow([result])
-                return f"Search results saved to {column}_search_results.csv"
+                return f"Search results saved to {output_path}"
             return unique_results
         except Exception as e:
             return f"Error occurred: {e}"
@@ -124,7 +126,7 @@ class ExcelHandler:
         except Exception as e:
             return f"Error occurred: {e}"
 
-    def search_column(self, column, pattern, output_choice='print'):
+    def search_column(self, column, pattern, output_choice='print', new_filename=DEFAULT_CSV_NAME):
         unique_results = set()
         try:
             if self.file_type == XLSX:
@@ -153,16 +155,15 @@ class ExcelHandler:
                 for result in unique_results:
                     print(result)
             elif output_choice == 'csv':
-                with open(f'{column}_search_results.csv', mode='w', newline='') as new_file:
+                output_path = os.path.join(os.getcwd(), new_filename)  # Using provided name or default for file paths
+                with open(output_path, mode='w', newline='', encoding='utf-8') as new_file:
                     writer = csv.writer(new_file)
                     for result in unique_results:
                         writer.writerow([result])
-                return f"Search results saved to {column}_search_results.csv"
+                return f"Search results saved to {output_path}"
             return unique_results
         except Exception as e:
             return f"Error occurred: {e}"
-
-
 
 # Define the command-line arguments
 def parse_arguments():
@@ -182,13 +183,16 @@ def main():
     # Instantiate the appropriate handler based on file type
     handler = UniversalHandler(args.filename).handler
 
+    # Determine the output filename
+    output_filename = args.newfile if args.newfile else DEFAULT_CSV_NAME
+
     # Perform operations based on command-line arguments
     if args.extract and args.newfile:
         print(handler.extract_columns(args.extract, args.newfile))
     elif args.search:
         print(handler.search_csv(args.search))
     elif args.searchcol and args.pattern:
-        print(handler.search_column(args.searchcol, args.pattern, args.output))
+        print(handler.search_column(args.searchcol, args.pattern, args.output, new_filename=output_filename))
 
 if __name__ == "__main__":
     main()
