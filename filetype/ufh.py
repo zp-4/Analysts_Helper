@@ -5,6 +5,7 @@ import xlrd
 from openpyxl import Workbook
 import argparse
 import os
+import sys
 
 # Constants for file types and default output filename
 CSV = 'csv'
@@ -12,12 +13,43 @@ XLSX = 'xlsx'
 XLS = 'xls'
 DEFAULT_CSV_NAME = 'output.csv'  # Default output file name if none is provided
 
+def strip_quotes(arg):
+    """
+    Strip quotes from the given command line argument.
+
+    Args:
+        arg (str): The command line argument.
+
+    Returns:
+        str: The argument with surrounding single or double quotes removed, if present.
+    """
+    if arg.startswith(("'", '"')) and arg.endswith(("'", '"')):
+        return arg[1:-1]
+    return arg
+
 class UniversalHandler:
+    """
+    A universal file handler class to determine and return the appropriate file handler
+    based on the file extension.
+
+    Attributes:
+        filename (str): The name of the file.
+        handler (CSVHandler or ExcelHandler): The determined file handler.
+    """
     def __init__(self, filename):
         self.filename = filename
         self.handler = self.get_handler()
 
     def get_handler(self):
+        """
+        Determine the handler based on file extension.
+
+        Returns:
+            A file handler (CSVHandler or ExcelHandler).
+
+        Raises:
+            ValueError: If the file type is unsupported.
+        """
         if self.filename.lower().endswith('.csv'):
             return CSVHandler(self.filename)
         elif self.filename.lower().endswith('.xlsx'):
@@ -28,10 +60,26 @@ class UniversalHandler:
             raise ValueError("Unsupported file type")
 
 class CSVHandler:
+    """
+    A handler class for CSV files to perform extract, search, and column search operations.
+
+    Attributes:
+        filename (str): The name of the file.
+    """
     def __init__(self, filename):
         self.filename = filename
 
     def extract_columns(self, columns, new_filename):
+        """
+        Extract specified columns from a CSV file and writes them to a new file.
+
+        Args:
+            columns (list of str): Columns to extract.
+            new_filename (str): The filename for the new file with extracted columns.
+
+        Returns:
+            str: Success or error message.
+        """
         try:
             with open(self.filename, mode='r', newline='', encoding='utf-8') as file, open(new_filename, mode='w', newline='', encoding='utf-8') as new_file:
                 reader = csv.DictReader(file)
@@ -44,6 +92,15 @@ class CSVHandler:
             return f"Error occurred: {e}"
 
     def search_csv(self, pattern):
+        """
+        Searches the entire CSV for a given string or regex and returns the rows that match.
+
+        Args:
+            pattern (str): String or regex pattern to search for.
+
+        Returns:
+            list: List of rows that match the pattern.
+        """
         matches = []
         try:
             with open(self.filename, mode='r', newline='', encoding='utf-8') as file:
@@ -56,6 +113,19 @@ class CSVHandler:
             return f"Error occurred: {e}"
 
     def search_column(self, column, pattern, output_choice='print', new_filename=DEFAULT_CSV_NAME):
+        """
+        Searches a given column for a string or regex and returns unique results.
+        Can print in terminal or create a new CSV.
+
+        Args:
+            column (str): Column to search.
+            pattern (str): String or regex pattern to search for.
+            output_choice (str): 'print' to display in terminal, 'csv' to create a new file.
+            new_filename (str): The filename for the new file with search results.
+
+        Returns:
+            set or str: Unique search results or a success/error message.
+        """
         unique_results = set()
         try:
             with open(self.filename, mode='r', newline='', encoding='utf-8') as file:
@@ -79,11 +149,28 @@ class CSVHandler:
             return f"Error occurred: {e}"
 
 class ExcelHandler:
+    """
+    A handler class for Excel (.xlsx and .xls) files to perform extract, search, and column search operations.
+
+    Attributes:
+        filename (str): The name of the file.
+        file_type (str): The type of Excel file ('xlsx' or 'xls').
+    """
     def __init__(self, filename, file_type):
         self.filename = filename
         self.file_type = file_type
 
     def extract_columns(self, columns, new_filename):
+        """
+        Extract specified columns from an Excel file and writes them to a new file.
+
+        Args:
+            columns (list of str): Columns to extract.
+            new_filename (str): The filename for the new file with extracted columns.
+
+        Returns:
+            str: Success or error message.
+        """
         try:
             if self.file_type == XLSX:
                 wb = openpyxl.load_workbook(self.filename)
@@ -107,6 +194,15 @@ class ExcelHandler:
             return f"Error occurred: {e}"
 
     def search_csv(self, pattern):
+        """
+        Searches the entire Excel file for a given string or regex and returns the rows that match.
+
+        Args:
+            pattern (str): String or regex pattern to search for.
+
+        Returns:
+            list: List of rows that match the pattern.
+        """
         matches = []
         try:
             if self.file_type == XLSX:
@@ -127,6 +223,19 @@ class ExcelHandler:
             return f"Error occurred: {e}"
 
     def search_column(self, column, pattern, output_choice='print', new_filename=DEFAULT_CSV_NAME):
+        """
+        Searches a given column in an Excel file for a string or regex and returns unique results.
+        Can print in terminal or create a new CSV.
+
+        Args:
+            column (str): Column to search.
+            pattern (str): String or regex pattern to search for.
+            output_choice (str): 'print' to display in terminal, 'csv' to create a new file.
+            new_filename (str): The filename for the new file with search results.
+
+        Returns:
+            set or str: Unique search results or a success/error message.
+        """
         unique_results = set()
         try:
             if self.file_type == XLSX:
@@ -165,8 +274,13 @@ class ExcelHandler:
         except Exception as e:
             return f"Error occurred: {e}"
 
-# Define the command-line arguments
 def parse_arguments():
+    """
+    Parse command-line arguments using argparse library.
+
+    Returns:
+        argparse.Namespace: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(description="Handle CSV and Excel files for various operations.")
     parser.add_argument('filename', help='The file to process')
     parser.add_argument('--extract', nargs='+', help='Columns to extract. Provide column names separated by spaces.')
@@ -178,21 +292,28 @@ def parse_arguments():
     return parser.parse_args()
 
 def main():
+    """
+    The main function to execute the file handler operations based on command-line arguments.
+    """
     args = parse_arguments()
 
-    # Instantiate the appropriate handler based on file type
-    handler = UniversalHandler(args.filename).handler
+    # Strip quotes from arguments as necessary
+    filename = strip_quotes(args.filename)
+    searchcol = strip_quotes(args.searchcol) if args.searchcol else None
+    pattern = strip_quotes(args.pattern) if args.pattern else None
+    output = strip_quotes(args.output)
+    newfile = strip_quotes(args.newfile) if args.newfile else DEFAULT_CSV_NAME
 
-    # Determine the output filename
-    output_filename = args.newfile if args.newfile else DEFAULT_CSV_NAME
+    # Instantiate the appropriate handler based on file type
+    handler = UniversalHandler(filename).handler
 
     # Perform operations based on command-line arguments
-    if args.extract and args.newfile:
-        print(handler.extract_columns(args.extract, args.newfile))
+    if args.extract and newfile:
+        print(handler.extract_columns(args.extract, newfile))
     elif args.search:
-        print(handler.search_csv(args.search))
-    elif args.searchcol and args.pattern:
-        print(handler.search_column(args.searchcol, args.pattern, args.output, new_filename=output_filename))
+        print(handler.search_csv(pattern))
+    elif searchcol and pattern:
+        print(handler.search_column(searchcol, pattern, output, new_filename=newfile))
 
 if __name__ == "__main__":
     main()
