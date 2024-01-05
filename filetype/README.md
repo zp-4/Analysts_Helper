@@ -27,7 +27,7 @@ pip install openpyxl xlrd
 Run the script from the command line, providing the necessary arguments:
 
 ```bash
-python ufhpy --filename 'path/to/your/file.csv'
+python ufh.py --filename 'path/to/your/file.csv'
 Command-line Arguments
 filename: The file to process. (Required)
 --extract: Columns to extract. Provide column names separated by spaces.
@@ -47,13 +47,13 @@ python ufh.py --filename 'data.csv' --extract 'Column1' 'Column2' --newfile 'ext
 
 Search entire file:
 ```bash
-python universal_file_handler.py --filename 'data.csv' --search 'pattern'
+python ufh.py --filename 'data.csv' --search 'pattern'
 ```
 
 Search specific column:
 
 ```bash
-python universal_file_handler.py --filename 'data.csv' --searchcol 'Column1' --pattern 'pattern' --output 'csv'
+python ufh.py --filename 'data.csv' --searchcol 'Column1' --pattern 'pattern' --output 'csv'
 ```
 
 ## Disclaimer
