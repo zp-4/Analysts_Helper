@@ -63,7 +63,7 @@ This script assumes a simple, flat table structure for Excel files without consi
 Contributions, issues, and feature requests are welcome.
 
 License
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](../LICENSE) file for details.
 
 
 
